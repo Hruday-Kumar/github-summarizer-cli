@@ -1,0 +1,39 @@
+# .github/workflows/main.yml
+
+# 1. Give your workflow a name
+name: CI - Build and Test Summarizer
+
+# 2. Set the trigger: Run this "on" every "push" to the "main" branch
+on:
+  push:
+    branches:
+      - main
+  pull_request: # Also run on pull requests
+
+# 3. Define the "jobs" (tasks) to run
+jobs:
+  build-and-test:
+    # 4. Use a standard "runner" (a fresh computer)
+    runs-on: ubuntu-latest
+
+    # 5. List the "steps" to perform
+    steps:
+      # 5.1: Check out your code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 5.2: Build the Docker image (same as we did locally)
+      - name: Build Docker image
+        run: docker build -t summarizer-test .
+
+      # 5.3: Run the Docker image with a test URL
+      # This is our "test"! If it fails, the whole build fails.
+      - name: Run test summarization
+        # We pass the GitHub Secret we saved into the container
+        # as an environment variable (this is the secure way)
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: |
+          docker run \
+            -e GITHUB_TOKEN \
+            summarizer-test "https://github.com/facebook/react/issues/20000"
